@@ -12,7 +12,8 @@ import {
   Dimensions,
   TouchableOpacity,
   Platform,
-  ActivityIndicator
+  ActivityIndicator,
+  I18nManager
 } from 'react-native'
 
 /**
@@ -48,7 +49,12 @@ const styles = {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'transparent'
+    backgroundColor: 'transparent',
+    ...Platform.select({
+      android: {
+        flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row'
+      }
+    })
   },
 
   pagination_y: {
@@ -85,7 +91,12 @@ const styles = {
     paddingHorizontal: 10,
     paddingVertical: 10,
     justifyContent: 'space-between',
-    alignItems: 'center'
+    alignItems: 'center',
+    ...Platform.select({
+      android: {
+        flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row'
+      }
+    })
   },
 
   buttonText: {
@@ -284,7 +295,7 @@ export default class extends Component {
     }
 
     initState.offset[initState.dir] =
-      initState.dir === 'y' ? initState.height * props.index : initState.width * props.index
+      initState.dir === 'y' ? height * props.index : width * props.index
 
     this.internals = {
       ...this.internals,
@@ -321,11 +332,8 @@ export default class extends Component {
     // related to https://github.com/leecade/react-native-swiper/issues/570
     // contentOffset is not working in react 0.48.x so we need to use scrollTo
     // to emulate offset.
-    if(this.state.total > 1) {
+    if (this.initialRender && this.state.total > 1) {
       this.scrollView.scrollTo({ ...offset, animated: false })
-    }
-	
-    if (this.initialRender) {
       this.initialRender = false
     }
 
@@ -467,7 +475,7 @@ export default class extends Component {
     if (!this.internals.offset)
       // Android not setting this onLayout first? https://github.com/leecade/react-native-swiper/issues/582
       this.internals.offset = {}
-    const diff = offset[dir] - (this.internals.offset[dir] || 0)
+    const diff = offset[dir] - this.internals.offset[dir]
     const step = dir === 'x' ? state.width : state.height
     let loopJump = false
 
@@ -704,7 +712,7 @@ export default class extends Component {
     let button = null
 
     if (this.props.loop || this.state.index !== this.state.total - 1) {
-      button = this.props.nextButton || <Text style={styles.buttonText}>›</Text>
+      button = this.props.nextButton || <Text style={styles.buttonText}>{Platform.OS !== 'android' && I18nManager.isRTL ? '‹' : '›'}</Text>
     }
 
     return (
@@ -721,7 +729,7 @@ export default class extends Component {
     let button = null
 
     if (this.props.loop || this.state.index !== 0) {
-      button = this.props.prevButton || <Text style={styles.buttonText}>‹</Text>
+      button = this.props.prevButton || <Text style={styles.buttonText}>{Platform.OS !== 'android' && I18nManager.isRTL !== 'android' ? '›' : '‹'}</Text>
     }
 
     return (
@@ -781,7 +789,7 @@ export default class extends Component {
         onScrollEndDrag={this.onScrollEndDrag}
         style={this.props.scrollViewStyle}
       >
-        {pages}
+      {Platform.OS == 'android' ? (I18nManager.isRTL ? pages.reverse() : pages) : pages}
       </ScrollView>
     )
   }
